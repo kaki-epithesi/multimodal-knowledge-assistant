@@ -1,4 +1,4 @@
-# Multimodal Knowledge Assistant — v0.1 (Python backend)
+# Multimodal Knowledge Assistant
 
 Minimal working backend to boot a FastAPI server with a health endpoint.
 
