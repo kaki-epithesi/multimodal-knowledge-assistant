@@ -4,3 +4,10 @@ __pycache__/
 .env
 *.pyc
 .DS_Store
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploaded files
+/data/*
