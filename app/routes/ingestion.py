@@ -41,7 +41,25 @@ async def upload_file(file: UploadFile):
     conn.commit()
     conn.close()
 
-    return {"file_id": file_id, "filename": file.filename, "chunks": len(chunks)}
+    #build/update BM25 index from all chunks in DB
+    from app.services.indexer import Indexer
+    indexer = Indexer(method="bm25")
+
+    # fetch all chunks (not just this file’s, so multiple docs are indexed)
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+    cursor.execute("SELECT content FROM chunks")
+    all_chunks = [row[0] for row in cursor.fetchall()]
+    conn.close()
+
+    indexer.build_index(all_chunks)
+
+    return {
+        "file_id": file_id,
+        "filename": file.filename,
+        "chunks": len(chunks),
+        "status": "ingested + indexed"
+    }
 
 @router.get("/list")
 def list_files():
