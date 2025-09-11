@@ -22,7 +22,6 @@ class DummyRetriever:
 @pytest.fixture(autouse=True)
 def patch_retriever(monkeypatch):
     # Monkeypatch the Retriever used by the route to be DummyRetriever.
-    # If your route imports Retriever under a different path, change RETRIEVER_IMPORT_PATH.
     from importlib import import_module
     module_path, class_name = RETRIEVER_IMPORT_PATH.rsplit(".", 1)
     module = import_module(module_path)
@@ -39,8 +38,13 @@ def test_query_endpoint_basic():
     results = body.get("results")
     assert isinstance(results, list)
     assert len(results) == 1
-    r_text, r_score = results[0]
-    assert "hybrid retrieval" in r_text
+
+    # results are serialized objects: {"text": "...", "score": ...}
+    first = results[0]
+    assert isinstance(first, dict)
+    assert "text" in first and "score" in first
+    assert "hybrid retrieval" in first["text"]
+    assert isinstance(first["score"], (int, float))
 
 
 def test_query_missing_q():
