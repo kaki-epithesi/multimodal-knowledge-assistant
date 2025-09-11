@@ -1,5 +1,38 @@
 # Changelog
 
+## v0.4 – Hybrid Retrieval (BM25 + Semantic with FAISS)
+**Release Date:** 11-09-2025  
+
+### ✨ Features
+- Introduced **hybrid retrieval** pipeline:
+  - Integrated **Sentence-Transformers** for generating semantic embeddings.
+  - Added **FAISS** vector index for efficient similarity search.
+  - Fused semantic (FAISS) and lexical (BM25) scores via min-max normalization and weighted combination.
+- Extended `Indexer` service:
+  - New `method="hybrid"` mode builds both BM25 and FAISS indexes.
+  - Persists FAISS index to `data/faiss.index` and metadata to `data/index.pkl`.
+- Extended `Retriever` service:
+  - Loads hybrid index and performs combined retrieval.
+  - Returns fused ranked snippets with both semantic and BM25 signals.
+- Updated ingestion flow:
+  - After file upload and chunking, all chunks in SQLite can now be indexed using hybrid mode.
+- Improved `/query` endpoint:
+  - Returns 404 if index not built.
+  - Supports hybrid retrieval results in addition to BM25/TF-IDF.
+
+### 🧪 Testing
+- Updated `tests/test_qa.py`:
+  - Mocked retriever for CI to avoid heavy FAISS/transformer dependencies.
+  - Fixed test assertions to validate JSON response shape instead of tuple unpacking.
+- Existing ingestion and health tests remain valid.
+
+### 📦 Dependencies
+- Added `sentence-transformers` for embeddings.
+- Added `faiss-cpu` (or `faiss-gpu` if using GPU) for vector indexing.
+- Retained `rank-bm25` and `scikit-learn` for lexical retrieval.
+
+---
+
 ## v0.3 – Basic Q&A (BM25/TF-IDF Retrieval)
 **Release Date:** 01-09-2025  
 

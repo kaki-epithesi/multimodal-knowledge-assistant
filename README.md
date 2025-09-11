@@ -30,13 +30,14 @@ multimodal-knowledge-assistant/
 │  │  └─ qa.py               # Query API
 │  └─ services/
 │     ├─ pdf_parser.py       # PyMuPDF text extraction
-│     ├─ chunker.py          # Simple text chunking
-│     ├─ indexer.py          # BM25/TF-IDF index builder
+│     ├─ chunker.py          # Text chunking
+│     ├─ indexer.py          # Index builder (BM25 / TF-IDF / Hybrid with FAISS)
 │     └─ retriever.py        # Query retriever
 ├─ data/                     # Uploaded files + serialized index (ignored in Git)
 ├─ tests/
 │  ├─ test_ingestion.py      # Pytest for ingestion
-│  └─ test_qa.py             # Pytest for Q&A
+│  ├─ test_health.py         # Pytest for health
+│  └─ test_qa.py             # Pytest for Q&A (mock retriever in CI)
 ├─ .gitignore
 ├─ requirements.txt
 ├─ changelog.md
@@ -49,28 +50,58 @@ multimodal-knowledge-assistant/
 
 ### Ingestion
 - POST /ingestion/upload → Upload PDF/TXT → extract, chunk, store in SQLite, update index.
+    - Body: form-data → key=file (File type) → choose PDF or TXT
+    - Process:
+	  - Saves file to /data
+	  -	Extracts text (pdf_parser.py for PDFs, raw read for TXT)
+	  -	Splits into chunks (chunker.py)
+	  -	Stores into SQLite (files and chunks tables)
+	  -	Rebuilds index (BM25 by default, hybrid optional)
+  - Example Response
+    ```json
+    {
+      "file_id": 1,
+      "filename": "example.pdf",
+      "chunks": 12,
+      "status": "ingested + indexed"
+    }
+    ```
 - GET /ingestion/list → List uploaded files with metadata.
 - GET /ingestion/download/{file_id} → Download file by ID.
 
 ### Query
 - POST /query → Query ingested documents and return top-k ranked snippets.
+
 #### Example:
 ```json
 {
-  "q": "What is the introduction about?",
-  "top_k": 2
+  "q": "What is hybrid retrieval?",
+  "top_k": 3
 }
 ```
+#### Example Response:
+```json
+{
+  "query": "What is hybrid retrieval?",
+  "results": [
+    {"text": "This is a sample passage about hybrid retrieval.", "score": 0.95}
+  ]
+}
+```
+## 🛠️ Implementation Notes
 
-## Notes
-- Uses FastAPI + Uvicorn for the API.
-- Uses PyMuPDF (fitz) for PDF text extraction.
-- Stores file metadata & text chunks in SQLite.
-- Added pytest tests for ingestion endpoints.
-- Uses BM25 (default) or TF-IDF for retrieval.
-- Runtime data (ingestion.db, /data/) is ignored via .gitignore.
+- FastAPI + Uvicorn → REST API server
+- SQLite → file metadata & chunk storage
+- PyMuPDF (fitz) → PDF text extraction
+- rank-bm25 → BM25 retrieval
+- scikit-learn → TF-IDF retrieval
+- sentence-transformers + faiss-cpu → semantic vector search (hybrid mode)
+- pytest → test suite with retriever mocked in CI for speed/stability
+-	All runtime data (/data/, DB file, FAISS index) is .gitignored
+
 
 ## Version History
+- v0.4 → Added hybrid retrieval (BM25 + Sentence-Transformers embeddings with FAISS); updated retriever & tests
 - v0.3 → Added Q&A retrieval (BM25/TF-IDF), /query endpoint, integrated indexing into ingestion.
 - v0.2 → Added ingestion of PDF/TXT with upload, list, download APIs, SQLite storage, PyMuPDF parsing, and tests.
 - v0.1 → Initial FastAPI backend with /health endpoint and CI setup.
