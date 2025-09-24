@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.5 – Summarizer Integration in QA
+**Release Date:** 25-09-2025  
+
+### ✨ Features
+- Integrated **summarization** directly into the `/query` endpoint:
+  - After retrieving top-k chunks, system now synthesizes an **answer** field.
+  - Default summarizer: **TextRank** (fast extractive).
+  - Optional summarizer: **Transformer** (abstractive, e.g. `facebook/bart-large-cnn`).
+- Updated `QueryResponse` model to include an `answer` field.
+- New `summarizer.py` service provides unified summarization interface.
+- Fallback mechanism: if transformer fails, falls back to TextRank.
+
+### 🧪 Testing
+- Updated `tests/test_qa.py` to assert presence of `answer` in response.
+- Transformer summarizer tests skipped in CI (heavy dependency).
+
+### 📦 Dependencies
+- Added `sumy` for TextRank.
+- Added `transformers` (with `torch`) for abstractive summarization.
+
+---
+
 ## v0.4 – Hybrid Retrieval (BM25 + Semantic with FAISS)
 **Release Date:** 11-09-2025  
 

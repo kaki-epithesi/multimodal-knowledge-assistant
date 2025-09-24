@@ -27,17 +27,18 @@ multimodal-knowledge-assistant/
 │  ├─ models.py              # Pydantic models (requests/responses)
 │  ├─ routes/
 │  │  ├─ ingestion.py        # Upload/list/download APIs
-│  │  └─ qa.py               # Query API
+│  │  └─ qa.py               # Query API (retrieval + summarizer)
 │  └─ services/
 │     ├─ pdf_parser.py       # PyMuPDF text extraction
 │     ├─ chunker.py          # Text chunking
 │     ├─ indexer.py          # Index builder (BM25 / TF-IDF / Hybrid with FAISS)
-│     └─ retriever.py        # Query retriever
+│     ├─ retriever.py        # Query retriever
+│     └─ summarizer.py       # TextRank + Transformer summarizers
 ├─ data/                     # Uploaded files + serialized index (ignored in Git)
 ├─ tests/
 │  ├─ test_ingestion.py      # Pytest for ingestion
 │  ├─ test_health.py         # Pytest for health
-│  └─ test_qa.py             # Pytest for Q&A (mock retriever in CI)
+│  └─ test_qa.py             # Pytest for QA flow
 ├─ .gitignore
 ├─ requirements.txt
 ├─ changelog.md
@@ -84,8 +85,10 @@ multimodal-knowledge-assistant/
 {
   "query": "What is hybrid retrieval?",
   "results": [
-    {"text": "This is a sample passage about hybrid retrieval.", "score": 0.95}
-  ]
+    {"text": "Hybrid retrieval combines BM25 and vector embeddings.", "score": 0.95},
+    {"text": "It improves ranking via semantic similarity and keyword overlap.", "score": 0.87}
+  ],
+  "answer": "Hybrid retrieval is a method that fuses BM25 with vector embeddings to improve relevance ranking."
 }
 ```
 ## 🛠️ Implementation Notes
@@ -96,11 +99,14 @@ multimodal-knowledge-assistant/
 - rank-bm25 → BM25 retrieval
 - scikit-learn → TF-IDF retrieval
 - sentence-transformers + faiss-cpu → semantic vector search (hybrid mode)
+- sumy → TextRank summarizer
+- transformers → optional abstractive summarization (e.g. facebook/bart-large-cnn)
 - pytest → test suite with retriever mocked in CI for speed/stability
 -	All runtime data (/data/, DB file, FAISS index) is .gitignored
 
 
 ## Version History
+- v0.5 → Integrated summarizer into QA endpoint (TextRank default, Transformer optional)
 - v0.4 → Added hybrid retrieval (BM25 + Sentence-Transformers embeddings with FAISS); updated retriever & tests
 - v0.3 → Added Q&A retrieval (BM25/TF-IDF), /query endpoint, integrated indexing into ingestion.
 - v0.2 → Added ingestion of PDF/TXT with upload, list, download APIs, SQLite storage, PyMuPDF parsing, and tests.
