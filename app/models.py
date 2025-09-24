@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 
 class QueryRequest(BaseModel):
@@ -15,3 +15,4 @@ class Snippet(BaseModel):
 class QueryResponse(BaseModel):
     query: str
     results: List[Snippet]
+    answer: Optional[str] = None

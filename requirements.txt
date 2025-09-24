@@ -11,3 +11,6 @@ scikit-learn
 rank-bm25
 faiss-cpu
 sentence-transformers
+sumy>=0.9.0
+transformers>=4.30.0
+torch>=1.13.0
